@@ -8,7 +8,7 @@
 	$dir = "testcases/";
 	$testCases = [];
 	
-	if (is_dir($dir)){ echo('dir ok: '.$dir);
+	if (is_dir($dir)){
 	  if ($dh = opendir($dir)){
 		while (($file = readdir($dh)) !== false){
 		  if(strtolower(substr($file, -4)) == '.php'){
@@ -18,7 +18,7 @@
 		}
 		closedir($dh);
 	  }
-	}else echo('not a dir: '.$dir);
+	}
 	$exists = (count($testCases)? ":" : " отсутствуют :-(");
 ?>
 -->
