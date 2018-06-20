@@ -1,24 +1,27 @@
+<!--
 <?
 /*
 *					Главная страница
 *	Здесь мы можем ознакомиться с перечнем тестовых заданий
-*/
-
-	$dir = "/testcases/";
+*/ 
+	//$dir = $_SERVER["DOCUMENT_ROOT"]."/testcases/";
+	$dir = "testcases/";
 	$testCases = [];
-	// Open a directory, and read its contents
-	if (is_dir($dir)){
+	
+	if (is_dir($dir)){ echo('dir ok: '.$dir);
 	  if ($dh = opendir($dir)){
 		while (($file = readdir($dh)) !== false){
 		  if(strtolower(substr($file, -4)) == '.php'){
 			  $testCases[] = $file;
 		  }
+		  echo $file."\n";
 		}
 		closedir($dh);
 	  }
-	}
+	}else echo('not a dir: '.$dir);
 	$exists = (count($testCases)? ":" : " отсутствуют :-(");
 ?>
+-->
 <html>
 	<head>
 		<meta charset='utf-8' />
@@ -34,7 +37,7 @@
 			}
 			foreach($testCases as $num => $name){
 ?>
-		<h2><a id='testcase-<?=$num?>' href='<?=$dir.$name?>'>Задание <?=$num?>: компания <?=substr($name, 0, strlen($name)-3)?></a> </h2>
+		<h2><a id='testcase-<?=$num?>' href='<?=$dir.$name?>'>Задание <?=$num?></a>, компания <?=substr($name, 0, strlen($name)-3)?></h2>
 <?				
 			}
 		?>
