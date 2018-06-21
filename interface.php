@@ -46,17 +46,17 @@
 		private function ProcessTestForm(){
 			$template = "<b>Называется \"".$this->testForm['name']."\"</b> <br> <form method='post'>\n";
 			foreach($this->testForm['fields'] as $field => $properties){
-				if(isset($properties['value']) && is_array($properties['value'])){
-					foreach($properties['value'] as $num => $value){
+				if(isset($properties['value'])){
+					if(is_array($properties['value'])){
+						foreach($properties['value'] as $num => $value){
+							$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='$value' />\n";
+						}
+					}else 
 						$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='$value' />\n";
-					}
 				}
-				else{
-					if(isset($properties['value']))
-						$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='$value' />\n";
-					else
-						$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='{$this->defaultValue($field, $properties['useDefault'])}' />\n";
-				}
+				else
+					$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='{$this->defaultValue($field, $properties['useDefault'])}' />\n";
+				
 				if(isset($properties['newline']))
 					$template .= str_repeat('<br />', $properties['newline']);
 			}
