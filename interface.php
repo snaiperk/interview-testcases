@@ -5,7 +5,7 @@
 	 */
 	interface phpTest{
 		public function getCompanyName();
-		public function renderTestForm();
+		public function configTestForm();
 		public function getResultMarker();
 		public function computeResults($args_object);
 	}
@@ -15,11 +15,7 @@
 		private $fileName = 'ChipComposer.txt';
 		private $resultMarker = 'needToCompute';
 		
-		public function defaultValue($arg_name, $defaultVal = 0){
-			return (isset($_POST[$arg_name])?$_POST[$arg_name]:$defaultVal);
-		}
-		
-		public function renderTestForm(){
+		public function configTestForm(){
 			
 		}
 	}
@@ -28,6 +24,7 @@
 		private $curTest;
 		private $company = "";
 		private $testForm = "";
+		private $testFormCode = "";
 		private $resultMarker = "### NOTHING TO DO HERE ###";
 		private $testResult = "";
 		private static $testDirector = NULL;
@@ -35,10 +32,36 @@
 		private function __construct(phpTest $test){
 			$this->curTest 		= 		$test;
 			$this->company 		= 		$this->curTest->getCompanyName();
-			$this->testForm 	=	 	$this->curTest->renderTestForm();
+			$this->testForm		=	 	$this->curTest->configTestForm();
+			$this->testFormCode	=		$this->ProcessTestForm();
 			$this->resultMarker = 		$this->curTest->getResultMarker();
 			if(isset($_POST[$this->resultMarker]))
 				$this->testResult = $this->curTest->computeResults($_POST);
+		}
+		
+		private function defaultValue($arg_name, $defaultVal = 0){
+			return (isset($_POST[$arg_name])?$_POST[$arg_name]:$defaultVal);
+		}		
+		
+		private function ProcessTestForm(){
+			$template = "<b>Называется \"".$this->testForm['name']."\"</b> <br> <form method='post'>\n";
+			foreach($this->testForm['fields'] as $field => $properties){
+				if(isset($properties['value']) && is_array($properties['value'])){
+					foreach($properties['value'] as $num => $value){
+						$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='$value' />\n";
+					}
+				}
+				else{
+					if(isset($properties['value']))
+						$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='$value' />\n";
+					else
+						$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='{$this->defaultValue($field, $properties['useDefault'])}' />\n";
+				}
+				if(isset($properties['newline']))
+					$template .= str_repeat('<br />', $properties['newline']);
+			}
+			$template .= "</form>";
+			return $template;
 		}
 		
 		public static function getInstance(phpTest $test){
@@ -57,7 +80,7 @@
 	<body style='background-color: #F0FFF0'>
 		<h1>Тестовое задание от компании <?=$this->company?></h1>
 		Вернуться <a href='../index.php'>на главную</a><hr>
-		<?=$this->testForm?>
+		<?=$this->testFormCode?>
 		<hr>
 		<?=$this->testResult?>
 	</body>

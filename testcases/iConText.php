@@ -40,7 +40,7 @@
 		private $outBufferLen	=	0;
 		private $fileBufferLen	=	0;
 		private $chipSymbol		=	'$';
-		private $spaceSymbol	=	' ';
+		private $spaceSymbol	=	'.';
 		private $spaceString	= 	'';
 		
 		private function C($n, $k){ // Вычисление биномиального коэффициента
@@ -56,16 +56,39 @@
 			}
 			return $koef;
 		}
-		//private function MakeCombination($prefix){
-		//	if(is_int($prefix->d)
-		//}
+
+		// Составленную строку привести к формату хранения
+		private function MakeStorageFormat($result){
+			if(is_int($result)){ // Размещаем результат на 5 байт для x64 и на 4 байта для x32-систем
+				return 	chr($result & 0xFF).
+						chr(($result & ((int)0xFF << 0x08))>>0x08).
+						chr(($result & ((int)0xFF << 0x10))>>0x10).
+						chr(($result & ((int)0xFF << 0x18))>>0x18).(PHP_INT_SIZE == 8?
+						chr(($result & ((int)0xFF << 0x20))>>0x20):'');
+			}
+			else{
+				return $result . "\n"; 
+				// Не будем сорить в конце пробелами. Кому надо будет искать - прошерстит весь файл построчно или возьмёт бинарный формат
+			}
+		}
+		private function prepareNum($n){
+			$result = $n.'';
+			return str_repeat(' ',5-strlen($n)).$n;
+		}
 		// Рекурсивный метод, возвращающий все варианты расстановок, доступные на каждом шаге
-		private function Combine(int $chips, int $fields, int $prefix=0, int $level=0){
+		private function Combine(int $chips, int $fields, $prefix, int $level=0){
 			$freeSpace = $fields - $chips; // Сколько вообще осталось места для расстановок		
-			$tmp = (1 << $level);
+			$tmp=(is_int($prefix)?(1 << $level):''); 
+			
 			for($i = 0; $i <= $freeSpace; $i++){
 				// Первым делом получаем отступ текущей фишки и кладём её
-				$result = $prefix  | ($tmp << $i);
+				if(is_int($prefix)){
+					$result = $prefix | ($tmp << $i);
+				}
+				else{
+					$result = $prefix . $tmp . $this->chipSymbol;
+					$tmp .= $this->spaceSymbol;
+				}
 
 				if($chips > 1) 			// Ещё не все фишки разложены, пока не стоит
 					$this->Combine($chips-1, $fields-$i-1, $result, ++$level); // Дораскладываем
@@ -73,14 +96,17 @@
 					//	вместо количества полей (что предполагается логикой кода). Самое интересное, что какое-то время это даже работало
 				else
 					if($chips == 1){ // Осталась последняя, и она на каждом текущем шаге цикла лежит на своём месте - то есть её можно уже выводить
-						$this->fileBuffer	.= 	chr($result & 0xFF).
-												chr(($result & ((int)0xFF << 0x08))>>0x08).
-												chr(($result & ((int)0xFF << 0x10))>>0x10).
-												chr(($result & ((int)0xFF << 0x18))>>0x18).
-												chr(($result & ((int)0xFF << 0x20))>>0x20);
+						$this->fileBuffer	.= 	$this->MakeStorageFormat($result);
 						$this->fileBufferLen++;
 						if($this->fileBufferLen >= COMBINATION_DROP_INTERVAL)
 							$this->SaveResult();
+						
+						if(is_string($prefix)){
+							if($this->outBufferLen < COMBINATION_RENDER_LIMIT)
+							{
+								$this->outBuffer .= $this->prepareNum(++$this->outBufferLen).'. [ '.$result.str_repeat($this->spaceSymbol,$freeSpace-$i)." ]<br>\n";
+							}
+						}
 					}
 			}
 		}
@@ -112,7 +138,8 @@
 			$errlog = '';
 			$n = intval($args['fieldsCount']); // Можно, конечно, проверить на существование в запросе, защититься от битого запроса... Но зачем тут?
 			$k = intval($args['chipCount']);
-			$option = intval($args[$this->resultMarker]);
+			$option = $args[$this->resultMarker];
+			$isBinary = strpos($option, 'BIN')!==false;
 			if(!$this->checkInput($n)) $errlog .= 'Ошибка ввода количества ячеек, ожидается число от 1 до '.FIELDS_LIMIT.", а передано \"$n\"<br />\n";
 			if(!$this->checkInput($k)) $errlog .= 'Ошибка ввода количества фишек, ожидается число от 1 до '.FIELDS_LIMIT.", а передано \"$k\"<br />\n";
 			if($n < $k) $errlog .= "Ошибка ввода количества фишек - их больше, чем ячеек! Все не влезут, придётся складывать горкой.<br />\n";
@@ -120,7 +147,7 @@
 				$combinations = $this->C($n, $k);
 				$variants = explode(',','ов,,а,а,а,ов,ов,ов,ов,ов');											/* 		:)		*/
 				$result = 'Имеем '.number_format ( $combinations , 0, '.', ' ' ).' возможны'.($combinations % 10 != 1?'х':'й').' вариант'.$variants[$combinations%10].' расстановки!';
-				$this->outBuffer	=	($combinations>200?'Если транспонировать и анимировать эти строки, будет похоже на игру для винтажных мобильников, типа змейки или тетриса:':'Сами комбинации:')."\n";
+				$this->outBuffer	=	($combinations>200?'  Если транспонировать и анимировать эти строки, будет похоже на игру для винтажных мобильников, типа змейки или тетриса:':'  Сами комбинации:')."\n";
 				if($combinations > COMBINATION_RENDER_LIMIT){
 					$this->outBuffer .= "(на экран влезло не всё)\n";
 				}
@@ -129,7 +156,7 @@
 				$this->fileBufferLen=	0;
 				$this->ClearFile();
 				$this->spaceString = str_repeat($this->spaceSymbol, $n); // Получаем строку из кучи пробелов (это уже не надо, так как я грохнул текстовый функционал и перешёл на бинарный)
-				$this->Combine($k, $n); // Вы числяем, даже если вариантов меньше - в файле будет вариант согласно заданию, а на экране будет красота
+				$this->Combine($k, $n, ($isBinary?0:'')); // Вычисляем, даже если вариантов меньше - в файле будет вариант согласно заданию, а на экране будет красота
 				// Хотя это совершенно не обязательно, можно спрятать вызов вычислителя в условие.
 				$fileUrl = "<a href='$this->fileName' download>файл</a>";
 				if($combinations > COMBINATION_RENDER_LIMIT){
@@ -140,7 +167,7 @@
 				}
 				$this->SaveResult(); // В суматохе чуть не забыли о самом главном - отчитаться о результате
 				// Маленькая ремарочка, про вывод чисел в задании ничего не было сказано, но если они нужны - можно и добавить
-				$result .= " Скачайте $fileUrl с результатом, без регистрации и смс!<hr>\n<pre>\n$this->outBuffer\n</pre>";
+				$result .= " Скачайте ".($isBinary?'бинарный':'текстовый')." $fileUrl с результатом, без регистрации и смс!<hr>\n<pre>\n$this->outBuffer\n</pre>";
 			}
 			else{
 				$result = "<b>В процессе работы возникли ошибки:</b><br>\n$errlog";
@@ -151,14 +178,14 @@
 		
 		public function getResultMarker() {return $this->resultMarker;}
 		public function getCompanyName() {return $this->companyName;}
-		public function renderTestForm(){
+		public function configTestForm(){
 			// Я решил для начала не разделять полностью отображение и логику, хотя это немножко напрашивается
-			$form = "<b>Называется \"Про ячейки и фишки\"</b> <br> <form method='post'>
-			Введите количество полей: <input type='number' name='fieldsCount' 	maxlength='3' value='{$this->defaultValue('fieldsCount', 36)}'/><br>
-			Введите количество фишек: <input type='number' name='chipCount' 	maxlength='3' value='{$this->defaultValue('chipCount', 18)}'/><br>
-			<input type='submit' name='{$this->resultMarker}' value='Вычислить!'/>
-			</form>"; // <input type='submit' name='{$this->resultMarker}' value='Вычислить (TEXT FORMAT)!'/> - можно ещё сделать так, чтобы был только текст
-			
+			$form = ['name'=>"Про ячейки и фишки", 
+					'fields'=>[
+						'fieldsCount'=>['type'=>'number', 'caption'=>'Введите количество полей', 'useDefault'=>36, 'newline'=>1],
+						'chipCount'=>['type'=>'number', 'caption'=>'Введите количество фишек', 'useDefault'=>18, 'newline'=>1],
+						$this->resultMarker=>['type'=>'submit', 'caption'=>'', 'value'=>['Вычислить (BIN FORMAT)!', 'Вычислить (TEXT FORMAT)!']]
+					]];			
 			return $form;
 		}
 	}
