@@ -42,6 +42,7 @@
 		private $chipSymbol		=	'$';
 		private $spaceSymbol	=	'.';
 		private $spaceString	= 	'';
+		private $arr			=	[];
 		
 		private function C($n, $k){ // Вычисление биномиального коэффициента
 			// Не будем проверять типы и пределы здесь, так как функция приватная и кому попало не достанется
@@ -73,6 +74,49 @@
 		private function prepareNum($n){
 			$result = $n.'';
 			return str_repeat(' ',5-strlen($n)).$n;
+		}
+		
+		private function NextSet($fields, $chips){
+			$k = $chips;
+			for($i = $k - 1; $i >= 0; --$i){
+				if($this->arr[$i] < $fields - $k + $i + 1){
+					++$this->arr[$i];
+					for($j = $i + 1; $j < $k; ++$j)
+						$this->arr[$j] = $this->arr[$j - 1] + 1;
+					return true;
+				}
+			}
+			return false;
+		}
+		
+		private function FillRow($fields, $chips){
+			$result = ''; 
+			$j = 0;
+			for($i = 0; $i < $fields; $i++){
+				if($i == $this->arr[$j]){
+					$result .=  '1';
+					$j++;
+				}
+				else $result .= '0';
+			}
+			$this->fileBuffer .= $result . "\n";
+			$this->fileBufferLen++;
+			if($this->fileBufferLen >= COMBINATION_DROP_INTERVAL)
+				$this->SaveResult();
+		}
+		
+		private function Combine2($fields, $chips){
+			ini_set("max_execution_time","0");
+			for($i=0; $i < $fields; $i++){
+				$this->arr[$i] = $i + 1;
+			}
+			$this->FillRow($fields, $chips);
+			if($fields >= $chips){
+				while($this->NextSet($fields, $chips)){
+					$this->FillRow($fields, $chips);
+				}
+			}
+			$this->SaveResult();
 		}
 		// Рекурсивный метод, возвращающий все варианты расстановок, доступные на каждом шаге
 		private function Combine(int $chips, int $fields, $prefix, int $level=0){
@@ -155,7 +199,8 @@
 				$this->fileBufferLen=	0;
 				$this->ClearFile();
 				$this->spaceString = str_repeat($this->spaceSymbol, $n); // Получаем строку из кучи пробелов (это уже не надо, так как я грохнул текстовый функционал и перешёл на бинарный)
-				$this->Combine($k, $n, ($isBinary?0:'')); // Вычисляем, даже если вариантов меньше - в файле будет вариант согласно заданию, а на экране будет красота
+				//$this->Combine($k, $n, ($isBinary?0:'')); // Вычисляем, даже если вариантов меньше - в файле будет вариант согласно заданию, а на экране будет красота
+				$this->Combine2($n, $k);
 				// Хотя это совершенно не обязательно, можно спрятать вызов вычислителя в условие.
 				$fileUrl = "<a href='$this->fileName' download>файл</a>";
 				if($combinations > COMBINATION_RENDER_LIMIT){
@@ -183,7 +228,7 @@
 					'fields'=>[
 						'fieldsCount'=>['type'=>'number', 'caption'=>'Введите количество полей', 'useDefault'=>36, 'newline'=>1],
 						'chipCount'=>['type'=>'number', 'caption'=>'Введите количество фишек', 'useDefault'=>18, 'newline'=>1],
-						$this->resultMarker=>['type'=>'submit', 'caption'=>'', 'value'=>['Вычислить (BIN FORMAT)!', 'Вычислить (TEXT FORMAT)!']]
+						$this->resultMarker=>['type'=>'submit', 'caption'=>'', 'value'=>[/*'Вычислить (BIN FORMAT)!',*/ 'Вычислить!']]
 					]];			
 			return $form;
 		}
