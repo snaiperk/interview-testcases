@@ -24,7 +24,7 @@
 	Итак, поехали!
 */
     // Эмпирически задаём ограничение для входных данных, исходя из возможностей нашего сервера и здравого смысла, 
-	const FIELDS_LIMIT = 100; // Даже при таких небольших количествах ячеек разложений уже получается что-то многовато :(
+	const FIELDS_LIMIT = 36; // Даже при таких небольших количествах ячеек разложений уже получается что-то многовато :(
 	const COMBINATION_RENDER_LIMIT = 1000;  // В принципе, можно было бы не лимитировать, но эта штука растёт очень быстро!
 	const COMBINATION_RENDER_MIN   = 10;	// Ниже этого количества вариантов в файле будет плейсхолдер
 	const COMBINATION_DROP_INTERVAL= 100000;// Если комбинаций больше, чем здесь указано, они будут сбрасываться на диск такими кусками
@@ -41,8 +41,9 @@
 		private $fileBufferLen	=	0;
 		private $chipSymbol		=	'$';
 		private $spaceSymbol	=	' ';
+		private $spaceString	= 	'';
 		
-		private function C($n, $k){
+		private function C($n, $k){ // Вычисление биномиального коэффициента
 			// Не будем проверять типы и пределы здесь, так как функция приватная и кому попало не достанется
 			$koef = 1;
 			if ($n - $k > $k)
@@ -55,41 +56,37 @@
 			}
 			return $koef;
 		}
-		
+		//private function MakeCombination($prefix){
+		//	if(is_int($prefix->d)
+		//}
 		// Рекурсивный метод, возвращающий все варианты расстановок, доступные на каждом шаге
-		private function Combine(int $chips, int $fields, String $prefix=''){
+		private function Combine(int $chips, int $fields, int $prefix=0, int $level=0){
 			$freeSpace = $fields - $chips; // Сколько вообще осталось места для расстановок		
+			$tmp = (1 << $level);
 			for($i = 0; $i <= $freeSpace; $i++){
-				// Первым делом получаем отступ текущей фишки, а фишка будет положена в любом случае
-				$curPrefix = ($i==0?"":str_repeat($this->spaceSymbol, $i)) . $this->chipSymbol;
-				// Вторым делом соединяем его с предыдущими отступами предыдущих фишек
-				$result	= 	$prefix . $curPrefix; 
-				// Третьим делом смотрим, можно ли уже что-нибудь вывести, или лучше нафиг? <-- в документации готового продукта не будет этого слова
-				
+				// Первым делом получаем отступ текущей фишки и кладём её
+				$result = $prefix  | ($tmp << $i);
+
 				if($chips > 1) 			// Ещё не все фишки разложены, пока не стоит
-					$this->Combine($chips-1, $fields-$i-1, $result); // Дораскладываем
+					$this->Combine($chips-1, $fields-$i-1, $result, ++$level); // Дораскладываем
 					// На этом месте я вынужден признаться, что затупил и долго передавал в рекурсивный вызов вычисленное свободное место
 					//	вместо количества полей (что предполагается логикой кода). Самое интересное, что какое-то время это даже работало
 				else
 					if($chips == 1){ // Осталась последняя, и она на каждом текущем шаге цикла лежит на своём месте - то есть её можно уже выводить
-						$result	= $result. ($freeSpace>=$i ? str_repeat($this->spaceSymbol, $freeSpace - $i):"");
-						$this->fileBuffer	.= "$result\n";
+						$this->fileBuffer	.= 	chr($result & 0xFF).
+												chr(($result & ((int)0xFF << 0x08))>>0x08).
+												chr(($result & ((int)0xFF << 0x10))>>0x10).
+												chr(($result & ((int)0xFF << 0x18))>>0x18).
+												chr(($result & ((int)0xFF << 0x20))>>0x20);
 						$this->fileBufferLen++;
 						if($this->fileBufferLen >= COMBINATION_DROP_INTERVAL)
 							$this->SaveResult();
-						// Я намеренно вывожу все концевые пробелы, это позволит при желании получить нужную комбинацию в итоговом файле за О(1).
-						// А ещё это позволяет красиво отрисовывать кавычки :)
-						
-						if($this->outBufferLen < COMBINATION_RENDER_LIMIT){	// Рендерим только сколько нннада
-							$this->outBufferLen++;
-							$this->outBuffer	.= "\"$result\"\n";
-						}
 					}
 			}
 		}
 		
 		private function checkInput($n){
-			return (is_int($n) && ($n <= FIELDS_LIMIT) && ($n > 0));
+			return (is_int($n) && ($n <= FIELDS_LIMIT) && ($n > 0) && ($n <= (PHP_INT_SIZE << 3))); // Вынужденное добавление в связи с переходом на бинарное хранение
 		}
 		
 		private function ClearFile(){
@@ -115,6 +112,7 @@
 			$errlog = '';
 			$n = intval($args['fieldsCount']); // Можно, конечно, проверить на существование в запросе, защититься от битого запроса... Но зачем тут?
 			$k = intval($args['chipCount']);
+			$option = intval($args[$this->resultMarker]);
 			if(!$this->checkInput($n)) $errlog .= 'Ошибка ввода количества ячеек, ожидается число от 1 до '.FIELDS_LIMIT.", а передано \"$n\"<br />\n";
 			if(!$this->checkInput($k)) $errlog .= 'Ошибка ввода количества фишек, ожидается число от 1 до '.FIELDS_LIMIT.", а передано \"$k\"<br />\n";
 			if($n < $k) $errlog .= "Ошибка ввода количества фишек - их больше, чем ячеек! Все не влезут, придётся складывать горкой.<br />\n";
@@ -130,7 +128,7 @@
 				$this->outBufferLen	=	0;
 				$this->fileBufferLen=	0;
 				$this->ClearFile();
-
+				$this->spaceString = str_repeat($this->spaceSymbol, $n); // Получаем строку из кучи пробелов (это уже не надо, так как я грохнул текстовый функционал и перешёл на бинарный)
 				$this->Combine($k, $n); // Вы числяем, даже если вариантов меньше - в файле будет вариант согласно заданию, а на экране будет красота
 				// Хотя это совершенно не обязательно, можно спрятать вызов вычислителя в условие.
 				$fileUrl = "<a href='$this->fileName' download>файл</a>";
@@ -155,11 +153,11 @@
 		public function getCompanyName() {return $this->companyName;}
 		public function renderTestForm(){
 			// Я решил для начала не разделять полностью отображение и логику, хотя это немножко напрашивается
-			$form = "<b>Называется \"Про ячейки и фишки\"</b><br> <form method='post'>
+			$form = "<b>Называется \"Про ячейки и фишки\"</b> <br> <form method='post'>
 			Введите количество полей: <input type='number' name='fieldsCount' 	maxlength='3' value='{$this->defaultValue('fieldsCount', 36)}'/><br>
 			Введите количество фишек: <input type='number' name='chipCount' 	maxlength='3' value='{$this->defaultValue('chipCount', 18)}'/><br>
 			<input type='submit' name='{$this->resultMarker}' value='Вычислить!'/>
-			</form>";
+			</form>"; // <input type='submit' name='{$this->resultMarker}' value='Вычислить (TEXT FORMAT)!'/> - можно ещё сделать так, чтобы был только текст
 			
 			return $form;
 		}
