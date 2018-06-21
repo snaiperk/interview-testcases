@@ -58,7 +58,7 @@
 		}
 
 		// Составленную строку привести к формату хранения
-		private function MakeStorageFormat($result){
+		private function MakeStorageFormat($result, $trailing){
 			if(is_int($result)){ // Размещаем результат на 5 байт для x64 и на 4 байта для x32-систем
 				return 	chr($result & 0xFF).
 						chr(($result & ((int)0xFF << 0x08))>>0x08).
@@ -67,8 +67,7 @@
 						chr(($result & ((int)0xFF << 0x20))>>0x20):'');
 			}
 			else{
-				return $result . "\n"; 
-				// Не будем сорить в конце пробелами. Кому надо будет искать - прошерстит весь файл построчно или возьмёт бинарный формат
+				return $result .str_repeat($this->spaceSymbol,$trailing). "\n"; 
 			}
 		}
 		private function prepareNum($n){
@@ -96,7 +95,7 @@
 					//	вместо количества полей (что предполагается логикой кода). Самое интересное, что какое-то время это даже работало
 				else
 					if($chips == 1){ // Осталась последняя, и она на каждом текущем шаге цикла лежит на своём месте - то есть её можно уже выводить
-						$this->fileBuffer	.= 	$this->MakeStorageFormat($result);
+						$this->fileBuffer	.= 	$this->MakeStorageFormat($result, $freeSpace-$i);
 						$this->fileBufferLen++;
 						if($this->fileBufferLen >= COMBINATION_DROP_INTERVAL)
 							$this->SaveResult();
