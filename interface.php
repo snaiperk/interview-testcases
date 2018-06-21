@@ -18,6 +18,10 @@
 		public function defaultValue($arg_name, $defaultVal = 0){
 			return (isset($_POST[$arg_name])?$_POST[$arg_name]:$defaultVal);
 		}
+		
+		public function renderTestForm(){
+			
+		}
 	}
 	
 	class phpTestDirector{
@@ -52,6 +56,7 @@
 	<head>
 	<body style='background-color: #F0FFF0'>
 		<h1>Тестовое задание от компании <?=$this->company?></h1>
+		Вернуться <a href='../index.php'>на главную</a><hr>
 		<?=$this->testForm?>
 		<hr>
 		<?=$this->testResult?>
