@@ -11,8 +11,8 @@
 	}
 	
 	abstract class BasicPhpTest{
-		private $companyName = "Basic company";
-		private $fileName = 'ChipComposer.txt';
+		private $companyName = "BasicCompanyInc";
+		private $fileName = "result-$companyName.txt";
 		private $resultMarker = 'needToCompute';
 		
 		public function configTestForm(){
@@ -47,15 +47,16 @@
 			$template = "<b>Называется \"".$this->testForm['name']."\"</b> <br> <form method='post'>\n";
 			foreach($this->testForm['fields'] as $field => $properties){
 				if(isset($properties['value'])){
+					$inputPrefix = "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='";
 					if(is_array($properties['value'])){
 						foreach($properties['value'] as $num => $value){
-							$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='$value' />\n";
+							$template .= "$inputPrefix$value' />\n";
 						}
 					}else 
-						$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='$value' />\n";
+						$template .= "$inputPrefix$value' />\n";
 				}
 				else
-					$template .= "{$properties['caption']} <input type='{$properties['type']}' name='$field' value='{$this->defaultValue($field, $properties['useDefault'])}' />\n";
+					$template .= "$inputPrefix{$this->defaultValue($field, $properties['useDefault'])}' />\n";
 				
 				if(isset($properties['newline']))
 					$template .= str_repeat('<br />', $properties['newline']);
