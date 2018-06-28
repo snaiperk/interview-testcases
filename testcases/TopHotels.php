@@ -1,6 +1,13 @@
 <?
-/*
+/*  ЗАДАНИЕ:
+ *	Вход - строка
+ *  Если строка является палиндромом - вернуть всю строку
+ *  Если нет - вернуть палиндром наибольшей длины, содержащийся в строке
+ *  Если палиндрома нет вообще - вернуть первую букву строки
  *
+ *	МОЙ КОММЕНТАРИЙ:
+ *	Возвращаю в виде сплошной строки, то есть исходные регистр и пробелы не восстанавливаю, спецсимволы из входа не удаляю.
+ *  Строка "А Я Вас Савяа" вернётся в виде "АЯВАССАВЯА", и никак иначе. Хотя при необходимости, конечно, можно и сделать.
  */
 require_once("../interface.php");
 
@@ -43,6 +50,9 @@ require_once("../interface.php");
 		
 		// Предопределённый интерфейсный метод класса
 		public function computeResults($args){
+
+		
+			
 			$this->inputStr = $this->getRefinedString($args['inputString']);
 			$this->sl = mb_strlen($this->inputStr) - 2;
 			$result = '';
@@ -69,6 +79,8 @@ require_once("../interface.php");
 				}
 				$result = (( $this->len <= 1 ) ? mb_substr($this->inputStr, 1, 1) : mb_substr( $this->inputStr, $this->pos - $this->len+2, $this->len * 2 - ($this->abba?0:1)));
 			}
+			
+
 			return $result;
 		}
 	
@@ -87,4 +99,5 @@ require_once("../interface.php");
 	$director = phpTestDirector::getInstance(new Polyndrome());
 	// И выведем шаблон на экран. То, что должно было быть посчитано, было посчитано ещё в конструкторе директора.
 	$director->render();
+	
 ?>
