@@ -32,7 +32,7 @@
 		<?
 			if(!count($testCases)){
 ?>
-				<h2></h2>
+				<h2>Такова горькая действительность.</h2>
 <?				
 			}
 			foreach($testCases as $num => $name){
