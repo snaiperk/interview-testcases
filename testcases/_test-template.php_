@@ -1,0 +1,36 @@
+<?
+/*
+
+*/
+require_once("../interface.php");
+
+	// *** Конкретный класс теста ***
+	class CLASS_NAME extends BasicPhpTest implements phpTest{
+		private $companyName	= "COMPANY_NAME";
+		private $comments		= '';
+		private $resultMarker	= 'needToCompute';
+		private $arr			=	[];
+		
+		public function computeResults($args){
+		}
+		
+		public function getResultMarker()	{return $this->resultMarker;}
+		public function getCompanyName()	{return $this->companyName;}
+		public function getComments()		{return $this->comments;}
+		
+		public function configTestForm(){
+			// Я решил для начала не разделять полностью отображение и логику, хотя это немножко напрашивается
+			$form = ['name'=>"TEST_NAME", 
+					'fields'=>[
+						'inputString'=>['type'=>'edit', 'caption'=>'Введите строку', 'useDefault'=>'Аргентина манит негра', 'newline'=>1],
+						$this->resultMarker=>['type'=>'submit', 'caption'=>'', 'value'=>[/*'Вычислить (BIN FORMAT)!',*/ 'Найти!']]
+					]];			
+			return $form;
+		}
+	}
+	//***** НАЧАЛО РАБОТЫ ТУТА *****
+	// Создадим экземпляры директора, отвечающего за отображение, и теста, отвечающего за логику теста
+	$director = phpTestDirector::getInstance(new Polyndrome());
+	// И выведем шаблон на экран. То, что должно было быть посчитано, было посчитано ещё в конструкторе директора.
+	$director->render();
+?>

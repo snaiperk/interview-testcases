@@ -32,9 +32,6 @@
 
 	// *** Конкретный класс теста ***
 	class ChipComposer extends BasicPhpTest implements phpTest{
-		private $companyName	= "iConText";
-		private $fileName		= 'ChipComposer.txt';
-		private $resultMarker	= 'needToCompute';
 		private $outBuffer		=	'';
 		private $fileBuffer		=	'';
 		private $outBufferLen	=	0;
@@ -43,6 +40,14 @@
 		private $spaceSymbol	=	'.';
 		private $spaceString	= 	'';
 		private $arr			=	[];
+		private $companyName	= 'iConText';
+		private $comments		= 'Изначально предлагались значения 36 и 18. Несмотря на теоретическую возможность текущего алгоритма вычислить такое количество сочетаний, настоятельно не рекомендую запускать скрипт на больших значениях.';
+		private $fileName		= 'ChipComposer.txt';
+		private $resultMarker	= 'needToCompute';		
+
+		public function getResultMarker()	{return $this->resultMarker;}
+		public function getCompanyName()	{return $this->companyName;}
+		public function getComments()		{return $this->comments;}
 		
 		private function C($n, $k){ // Вычисление биномиального коэффициента
 			// Не будем проверять типы и пределы здесь, так как функция приватная и кому попало не достанется
@@ -101,10 +106,13 @@
 			}
 			$this->fileBuffer .= $result . "\n";
 			$this->fileBufferLen++;
-			if($this->fileBufferLen >= COMBINATION_DROP_INTERVAL)
+			if($this->fileBufferLen >= COMBINATION_DROP_INTERVAL){
 				$this->SaveResult();
+				$this->fileBufferLen = 0;
+			}
 		}
 		
+		// Циклический метод на "обычной" арифметике. Хорош, но не лучший.
 		private function Combine2($fields, $chips){
 			ini_set("max_execution_time","0");
 			for($i=0; $i < $fields; $i++){
@@ -119,6 +127,7 @@
 			$this->SaveResult();
 		}
 		// Рекурсивный метод, возвращающий все варианты расстановок, доступные на каждом шаге
+		// Худший из трёх возможных алгоритмов
 		private function Combine(int $chips, int $fields, $prefix, int $level=0){
 			$freeSpace = $fields - $chips; // Сколько вообще осталось места для расстановок		
 			$tmp=(is_int($prefix)?(1 << $level):''); 
@@ -166,7 +175,7 @@
 			// Ошибками сыпать не будем, но можно
 		}
 		private function SaveResult(){
-			if(is_writable ($this->fileName)){
+			if(is_writable ($this->fileName) || !file_exists($this->fileName)){
 				$h = fopen($this->fileName, 'a+');
 				fwrite($h, $this->fileBuffer);
 				$this->fileBuffer = '';
@@ -199,8 +208,8 @@
 				$this->fileBufferLen=	0;
 				$this->ClearFile();
 				$this->spaceString = str_repeat($this->spaceSymbol, $n); // Получаем строку из кучи пробелов (это уже не надо, так как я грохнул текстовый функционал и перешёл на бинарный)
-				//$this->Combine($k, $n, ($isBinary?0:'')); // Вычисляем, даже если вариантов меньше - в файле будет вариант согласно заданию, а на экране будет красота
-				$this->Combine2($n, $k);
+				$this->Combine($k, $n, ($isBinary?0:'')); // Вычисляем, даже если вариантов меньше - в файле будет вариант согласно заданию, а на экране будет красота
+				//$this->Combine2($n, $k); // Метод потенциально крутой, но работает через жёпъ
 				// Хотя это совершенно не обязательно, можно спрятать вызов вычислителя в условие.
 				$fileUrl = "<a href='$this->fileName' download>файл</a>";
 				if($combinations > COMBINATION_RENDER_LIMIT){
@@ -220,16 +229,14 @@
 			return $result;
 		}		
 		
-		public function getResultMarker() {return $this->resultMarker;}
-		public function getCompanyName() {return $this->companyName;}
 		public function configTestForm(){
 			// Я решил для начала не разделять полностью отображение и логику, хотя это немножко напрашивается
 			$form = ['name'=>"Про ячейки и фишки", 
 					'fields'=>[
-						'fieldsCount'=>['type'=>'number', 'caption'=>'Введите количество полей', 'useDefault'=>36, 'newline'=>1],
-						'chipCount'=>['type'=>'number', 'caption'=>'Введите количество фишек', 'useDefault'=>18, 'newline'=>1],
-						$this->resultMarker=>['type'=>'submit', 'caption'=>'', 'value'=>[/*'Вычислить (BIN FORMAT)!',*/ 'Вычислить!']]
-					]];			
+						'fieldsCount'=>['type'=>'number', 'caption'=>'Введите количество полей', 'useDefault'=>10, 'newline'=>1], /* 36 */
+						'chipCount'=>['type'=>'number', 'caption'=>'Введите количество фишек', 'useDefault'=>5, 'newline'=>1],    /* 18 */
+						$this->getResultMarker()=>['type'=>'submit', 'caption'=>'', 'value'=>[/*'Вычислить (BIN FORMAT)!',*/ 'Вычислить!']]
+					]];
 			return $form;
 		}
 	}
