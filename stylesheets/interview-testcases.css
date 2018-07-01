@@ -1,0 +1,71 @@
+/*  Проект "interview-testcases"
+*   Основная таблица стилей для отображения проекта
+*
+*   Автор - Игорь Ондар
+*           io@azbukatuva.ru
+*/
+
+/*
+*   Выбор тестового задания - по сути, главная страница
+*/
+.testcase-select-document { /* Тело документа */
+    background-image: url('/images/background-bricks-01.jpg');
+    background-size: 500px;
+    margin: 0;
+    padding: 0;
+    
+    font-family: lora;
+    
+}
+
+.testcase-glass-matt { /* Рассеивающая матовая подложка */
+    border-radius: 10px;
+    border:     1px solid #f0f0f0;
+    background: none;    /* Наследует фон низлежащего слоя */
+    display:    block;
+    left:       50px;
+    top:        5px;
+    overflow:   hidden;   /* Убираем лохмотья */
+    position:   absolute;
+    
+    padding: 20px;          /* Добавляем поля */
+}
+
+.testcase-glass-matt:before { /* Рассеивающая матовая подложка */
+    background-image: url('/images/background-bricks-01.jpg');
+    background-size: 500px;
+    background-position: left 0px top 0px;  
+    content:    '';
+    width: 110%;
+    height: 110%;
+    left: -50px;
+    top: -5px;
+    box-shadow: inset 0 0 0 500px rgba(255, 255, 255, 0.3);
+    filter: blur(3px);
+    position: absolute;
+    z-index: -100;
+}
+
+.testcase-default-content {
+    
+}
+
+.testcase-commented {
+    font-family: Serif;
+    font-size: 12px;
+    margin: 10px;
+}
+
+.testcase-commented:before {
+    content: "“";
+}
+
+.testcase-commented:after {
+    content: "”";
+}
+
+.clickable {
+    cursor: pointer;
+    color:  #0f0fff;
+    text-shadow: 4px 4px 2px rgba(150, 150, 150, 1);
+}

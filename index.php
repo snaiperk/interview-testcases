@@ -1,45 +1,41 @@
-<!--
-<?
+<?php
+/*  Главная страница
+*
+*   Через неё происходит взаимодействие пользователя (потенциального работодателя)
+*   с примерами задач, которые задал он (или другие работодатели до него).
+*
+*   Автор проекта - Игорь Ондар.
+*                   io@azbukatuva.ru
+*/
+
+namespace snaiperk\interview;
+
+/* 
+ * Решаем вопрос автозагрузки
+ * Этот include-файл не мой - он скачан с сайта PSR.
+ */
+include 'core/psr/Psr4AutoloaderClass.php';             // Несмотря на то, что расположение этого файла немного нарушает
+                                                        // общую систему именования, это не страшно, потому что он такой один.
+
+$loader = new \Psr4\Autoloader\Psr4AutoloaderClass;     // Создадим экземпляр загрузчика
+$loader->register();                                    // Зарегистрируем метод
+$loader->addNamespace('snaiperk\interview', $_SERVER['DOCUMENT_ROOT']);          // Мудрить не будем, исходники лежат недалеко
+$loader->addNamespace('snaiperk\interview', $_SERVER['DOCUMENT_ROOT'].'/tests'); // Юнит-тесты - тоже.
+
 /*
-*					Главная страница
-*	Здесь мы можем ознакомиться с перечнем тестовых заданий
-*/ 
-	//$dir = $_SERVER["DOCUMENT_ROOT"]."/testcases/";
-	$dir = "testcases/";
-	$testCases = [];
-	
-	if (is_dir($dir)){
-	  if ($dh = opendir($dir)){
-		while (($file = readdir($dh)) !== false){
-		  if(strtolower(substr($file, -4)) == '.php'){
-			  $testCases[] = $file;
-		  }
-		  echo $file."\n";
-		}
-		closedir($dh);
-	  }
-	}
-	$exists = (count($testCases)? ":" : " отсутствуют :-(");
-?>
--->
-<html>
-	<head>
-		<meta charset='utf-8' />
-		<title>Тестовые задания</title>
-	<head>
-	<body style='background-color: #F0FFF0'>
-		<h1>Тестовые задания<?=$exists?></h1>
-		<?
-			if(!count($testCases)){
-?>
-				<h2>Такова горькая действительность.</h2>
-<?				
-			}
-			foreach($testCases as $num => $name){
-?>
-		<h2><a id='testcase-<?=$num?>' href='<?=$dir.$name?>'>Задание <?=$num?></a>, компания <?=substr($name, 0, strlen($name)-3)?></h2>
-<?				
-			}
-		?>
-	</body>
-</html>
+ *  Класс phpTestDirector - синглтон, поэтому его конструктор немного заныкан.
+ */
+$director = \snaiperk\interview\core\phpTestDirector::getInstance();        // Создаём объект, управляющий логикой приложения
+                                                                            // В момент создания он сам определяет, что делать сейчас
+$director->setBaseDir([         // Базовые директории нужны для тех случаев, когда приходится искать в открытом множестве сущностей
+    'templates' => $_SERVER['DOCUMENT_ROOT'].'/templates',                  // Задаём директорию, в которой лежат шаблоны вывода
+    'testcases' => $_SERVER['DOCUMENT_ROOT'].'/testcases'                   // И директорию, в которой лежат классы тестовых заданий
+]); 
+
+$director->addContextFields([   // Контекстные поля нужны для тех случаев, когда в шаблоне чётко указано название поля
+    'ТАБЛИЦА СТИЛЕЙ' => 'stylesheets/interview-testcases.css',              // Укажем таблицу стилей для шаблона
+    'СКРИПТ JS'      => 'javascripts/interview-testcases.js'                // И для скрипта
+]);
+
+// Наконец, отдадим клиенту готовую страницу!
+echo $director->render();
