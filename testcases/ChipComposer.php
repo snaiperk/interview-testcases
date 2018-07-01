@@ -49,6 +49,7 @@ class ChipComposer implements \snaiperk\interview\core\phpTestCase
     private $spaceString     =     '';
     private $arr             =    [];
     private $companyName     = 'iConText';
+    private $testName       = 'Сочетания фишек';
     private $comments        = 'Изначально предлагались значения 36 и 18.
     Несмотря на теоретическую возможность текущего алгоритма вычислить такое количество сочетаний, 
     настоятельно не рекомендую запускать скрипт на больших значениях.';

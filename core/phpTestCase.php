@@ -6,6 +6,7 @@ namespace snaiperk\interview\core;
  */
 interface phpTestCase
 {
+    public function getTestName();
     public function getCompanyName();
     public function configTestForm();
     public function getResultMarker();

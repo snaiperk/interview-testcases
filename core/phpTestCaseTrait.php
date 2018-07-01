@@ -10,10 +10,12 @@ namespace snaiperk\interview\core;
  */
 trait phpTestCaseTrait
 {
-    private $companyName;
-    private $comments;
-    private $fileName;
     private $resultMarker    = 'needToCompute';
+    
+    public function getTestName()
+    {
+        return $this->testName;
+    }
     
     public function configTestForm(){
         $form = ['name'=>"Название теста", 

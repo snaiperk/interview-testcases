@@ -19,12 +19,13 @@ class Polyndrome implements \snaiperk\interview\core\phpTestCase
 	private $arr            =    []; // Сюда складываем все найденные результаты, а лучше всего...
 	private $pos            = 0;    // ...будем тупо хранить позицию и...
 	private $len            = 0;    // ...длину максимального палиндрома, и перезаписывать по необходимости!
-	private $abba            = false;// Тип палиндрома на всякий случай тоже сховаем.
-	private $sl                = 0;    // Длину строки сохраним в объекте, чтобы сэкономить на её вычислении
-	private $inputStr        = '';   // Саму строку засунем туда же, чтобы не передавать каждый раз
+	private $abba           = false;// Тип палиндрома на всякий случай тоже сховаем.
+	private $sl             = 0;    // Длину строки сохраним в объекте, чтобы сэкономить на её вычислении
+	private $inputStr       = '';   // Саму строку засунем туда же, чтобы не передавать каждый раз
 	private $companyName    = 'TopHotel';
-	private $comments        = '1. Для запуска этого теста в php.ini должно быть включено расширение mbstring (<b><span style="color:blue">extension</span>=<span style="color:green">mbstring</span>;</b>)<br>2. Построки вида "А" и "АА" палиндромами не считаются, ладно?';
-	
+    private $testName       = 'Палиндром';
+	private $comments       = '1. Для запуска этого теста в php.ini должно быть включено расширение mbstring (<b><span style="color:blue">extension</span>=<span style="color:green">mbstring</span>;</b>)<br>2. Построки вида "А" и "АА" палиндромами не считаются, ладно?';
+    
 	private function getRefinedString($str)
 	{
 		return (is_string($str)?' '.mb_strtoupper(preg_replace('/\s+/', '', $str)).' ':'');

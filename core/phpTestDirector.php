@@ -14,19 +14,25 @@ namespace snaiperk\interview\core;
  */
 class phpTestDirector
 {
+    private const MARKER_WORKING_MODE = 'phpTestDirector_workingMode';
+    private const MARKER_CLASSNAME    = 'phpTestDirector_currentTest';
+    
     private static $testDirector    = null; // Объект-одиночка
     
-    private $phpTestCases           = [];   // Массив найденных решений
+    // Директории, поля замены, поля ввода
     private $baseDir                = [];   // Массив базовых директорий
     private $contextFields          = [];   // Массив полей подстановки
     private $mergeFields            = [];   // Массив всех полей, найденных в шаблоне
     private $testForm               = [];   // Массив полей для ввода данных в тест
-    
+    // Режим работы
     private $workingMode            = '';   // Текущее "рабочее состояние" приложения (мы ищем и выводим тесты, показываем один тест или считаем его)
     private $workingModeDefault     = 'select-testcase'; // Режим работы "по умолчанию"
+    // Шаблон
     private $currentTemplate        = '';   // Текущий шаблон отображения, текст
+    // Объекты тестов:
+    private $curTest;                       // Текущий тест, который мы показываем или считаем
+    private $phpTestCases           = [];   // Массив найденных решений
     
-    private $curTest;
 /******************************************************************************
     getInstance()
     Возвращает ссылку на экземпляр класса-синглтона phpTestDirector
@@ -46,8 +52,8 @@ class phpTestDirector
     }
 /******************************************************************************
     __construct()
-    Выполняет инициализацию объекта: определяет из запроса текущую стадию работы,
-    опрашивает объекты тестов на предмет результата и т.п.
+    Выполняет инициализацию объекта.
+    Тут пока что ничего делать не нужно, можем отдохнуть. Ура!
     
     Параметры:
         нет
@@ -57,13 +63,33 @@ class phpTestDirector
 */
     private function __construct()
     {
+    }
+    
+/******************************************************************************
+    doSomeLogic()
+    Реализует основную логику класса - решает "что делать" и делает это!
+    По идее, должно вызываться из метода $this->render()
+    
+    Параметры:
+        Нет
+        
+    Возвращаемое значение:
+        Нет
+*/        
+    private function doSomeLogic()
+    {
         // 1. Определим текущий режим работы
-        $this->workingMode = $this->defaultValue('phpTestDirector_workingMode', $this->workingModeDefault);
+        $this->workingMode = $this->defaultValue(phpTestDirector::MARKER_WORKING_MODE, $this->workingModeDefault);
         
         // 2. Определим для себя алгоритм работы в каждом режиме
         switch ($this->workingMode) {
             case 'select-testcase':
-                
+                $this->scanTestCaseDir(); // Загрузим список классов
+                $selectForm = $this->makeForm('cases-list');
+                $this->addContextFields([
+                    'ФОРМА ВЫБОРА ЗАДАНИЙ' => $selectForm,
+                    'КОЛИЧЕСТВО ЗАДАНИЙ' => count($this->phpTestCases) // В шаблоне не предусмотрено 0 и др. значения, но допилить недолго
+                ]);
                 break;
             case 'view-test':
                 
@@ -74,7 +100,7 @@ class phpTestDirector
             default:
                 // TODO: Надо сделать шаблон для неправильного режима
         }
-    }
+    }	    
 /******************************************************************************
     defaultValue($argName, $defaultVal = 0)
     Ищет в HTTP-запросе переменную с именем, переданным в $argName. Если находит - 
@@ -92,37 +118,59 @@ class phpTestDirector
         return (isset($_REQUEST[$argName]) ? $_REQUEST[$argName] : $defaultVal);
     }		
 /******************************************************************************
-    processTestForm()
+    makeForm($formType)
     Формирует из массива полей объекта phpTestCase HTML-код для вставки в шаблон
     Форма для ввода исходных данных на стадии запуска теста
     
     Параметры:
-        Нет
+        $formType - строка, тип запрошенной формы
         
     Возвращаемое значение:
         Строка, HTML-код формы для вставки в шаблон
 */     
-    private function ProcessTestForm()
+    private function makeForm($formType)
     {
-        $template = "<h2>Называется \"".$this->testForm['name']."\"</h2> <br> <form method='post'>\n";
-        foreach ($this->testForm['fields'] as $field => $properties) {
-            $inputPrefix = "{$properties['caption']} <input type='{$properties['type']}' name='$field' autocomplete='off' value='";
-            if (isset($properties['value'])) {
-                if (is_array($properties['value'])) {
-                    foreach ($properties['value'] as $num => $value) {
-                        $template .= "$inputPrefix$value' />\n";
-                    }
-                } else {
-                    $template .= "$inputPrefix$value' />\n";
+        $template = '';
+        switch ($formType) {
+            case 'cases-list':
+                $template      = "<form method='post' action='#'>\n";
+                $template     .= "<input type='hidden' name='".phpTestDirector::MARKER_WORKING_MODE."' value='view-test'><table>\n";
+                foreach ($this->phpTestCases as $testCase) {
+                    $template .= "\t<tr>\n";
+                    $template .= "\t\t<td>Тест \"".$testCase->getTestName()."\"</td>\n";
+                    $template .= "\t\t<td>от компании \"<b>".$testCase->getCompanyName()."</b>\"</td>\n";
+                    $template .= "\t\t<td><button type='submit' name='".phpTestDirector::MARKER_CLASSNAME."' value=\"".get_class($testCase)."\" >Смотреть</button></td>\n";
+                    $template .= "\t</tr>\n";
                 }
-            } else {
-                $template .= "$inputPrefix{$this->defaultValue($field, $properties['useDefault'])}' />\n";
-            }
-            if (isset($properties['newline'])) {
-                $template .= str_repeat('<br />', $properties['newline']);
-            }
+                $template .= "</table>\n</form>";
+                break;
+            case 'input-data':
+                $template = "<h2>Называется \"".$this->testForm['name']."\"</h2> <br> <form method='post'>\n";
+                foreach ($this->testForm['fields'] as $field => $properties) {
+                    $inputPrefix = "{$properties['caption']} <input type='{$properties['type']}' name='$field' autocomplete='off' value='";
+                    if (isset($properties['value'])) {
+                        if (is_array($properties['value'])) {
+                            foreach ($properties['value'] as $num => $value) {
+                                $template .= "$inputPrefix$value' />\n";
+                            }
+                        } else {
+                            $template .= "$inputPrefix$value' />\n";
+                        }
+                    } else {
+                        $template .= "$inputPrefix{$this->defaultValue($field, $properties['useDefault'])}' />\n";
+                    }
+                    if (isset($properties['newline'])) {
+                        $template .= str_repeat('<br />', $properties['newline']);
+                    }
+                }
+                $template .= "</form>";
+                break;
+            case 'test-result':
+                
+                break;
+            default:
+            
         }
-        $template .= "</form>";
         return $template;
     }
 
@@ -294,14 +342,69 @@ class phpTestDirector
     private function extractFieldNames($template)
     {   
         $result = [];
-        if (preg_match_all("|{[A-Za-zА-Яа-я0-9\-\.\+\:\=\s]+}|U", $template, $result, PREG_PATTERN_ORDER) > 0) {
+        if (preg_match_all(
+                "|{[A-Za-zА-Яа-я0-9\-\.\+\:\=\s]+}|U", 
+                $template, 
+                $result, 
+                PREG_PATTERN_ORDER
+            ) > 0) {
             $result = $result[0];
         }
         return $result;
-    }    
+    }
+    
+/******************************************************************************
+    is_testCase($object)
+    Проверяет, реализует ли объект интерфейс теста PHP
+    
+    Параметры:
+        $object   - объект произвольного класса
+                    
+    Возвращаемое значение:
+        Boolean
+*/
+    private function is_testCase($object)
+    {   
+        return ($object instanceof phpTestCase);
+    }  
+    
+/******************************************************************************
+    scanTestCaseDir()
+    Ищет классы, реализующие интерфейс phpTestCase, в директории кейсов
+    Найденные классы помещает в $this->phpTestCases
+    
+    Параметры:
+        Нет
+                    
+    Возвращаемое значение:
+        Нет
+*/
+    private function scanTestCaseDir()
+    {   
+        if (false !== $dir = opendir($this->getBaseDir('testcases'))) {
+            while (false !== $file = readdir($dir)) {
+                if ((substr($file, -4) == '.php') && (strlen($file) > 4)) {// Потенциально - новый класс!
+                    try {
+                        $tempName = '\\snaiperk\\interview\\testcases\\'.substr($file, 0, strlen($file) - 4);
+                        $tempObject = new $tempName;
+                        
+                        if ($this->is_testCase($tempObject)) {
+                            if (!is_array($this->phpTestCases)) {
+                                $this->phpTestCases = [];
+                            }
+                            array_push($this->phpTestCases, $tempObject);  // Добавили новый образчик в коллекцию
+                        }
+                    } catch (\Exception $e) {                           // Ну - не прокатило!
+                        
+                    }
+                }
+            }
+        }
+    } 
     
 /******************************************************************************
     render()
+    Практически основной метод класса! Всё начинается с его явного вызова.
     Формирует из имеющихся в объекте класса данных и заранее загруженного шаблона
     итоговый HTML-код страницы, которая будет выведена пользователю в браузер.
     За вывод в браузер отвечает вызывающая сторона.
@@ -314,6 +417,7 @@ class phpTestDirector
 */    
     public function render()
     {
+        $this->doSomeLogic();                                               // Здесь всё: режим работа, показ, вычисления...
         $this->currentTemplate = $this->loadTemplate();                     // Получим шаблон, соответствующий текущему режиму
         $result = strtr($this->currentTemplate, $this->contextFields);      // Проставим в него заранее вычисленные поля
         
