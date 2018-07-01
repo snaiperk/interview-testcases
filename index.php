@@ -21,6 +21,7 @@ $loader = new \Psr4\Autoloader\Psr4AutoloaderClass;     // Создадим эк
 $loader->register();                                    // Зарегистрируем метод
 $loader->addNamespace('snaiperk\interview', $_SERVER['DOCUMENT_ROOT']);          // Мудрить не будем, исходники лежат недалеко
 $loader->addNamespace('snaiperk\interview', $_SERVER['DOCUMENT_ROOT'].'/tests'); // Юнит-тесты - тоже.
+$loader->addNamespace('Psr', $_SERVER['DOCUMENT_ROOT'].'/core/psr');             // Методы и классы PSR
 
 /*
  *  Класс phpTestDirector - синглтон, поэтому его конструктор немного заныкан.
