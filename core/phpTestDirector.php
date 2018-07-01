@@ -23,6 +23,7 @@ class phpTestDirector
     private $testForm               = [];   // Массив полей для ввода данных в тест
     
     private $workingMode            = '';   // Текущее "рабочее состояние" приложения (мы ищем и выводим тесты, показываем один тест или считаем его)
+    private $workingModeDefault     = 'select-testcase'; // Режим работы "по умолчанию"
     private $currentTemplate        = '';   // Текущий шаблон отображения, текст
     
     private $curTest;
@@ -39,7 +40,7 @@ class phpTestDirector
     public static function getInstance()
     {
         if (!phpTestDirector::$testDirector) {
-            phpTestDirector::$testDirector = new phpTestDirector($test);
+            phpTestDirector::$testDirector = new phpTestDirector();
         }
         return phpTestDirector::$testDirector;
     }
@@ -56,7 +57,23 @@ class phpTestDirector
 */
     private function __construct()
     {
+        // 1. Определим текущий режим работы
+        $this->workingMode = $this->defaultValue('phpTestDirector_workingMode', $this->workingModeDefault);
         
+        // 2. Определим для себя алгоритм работы в каждом режиме
+        switch ($this->workingMode) {
+            case 'select-testcase':
+                
+                break;
+            case 'view-test':
+                
+                break;
+            case 'view-test-result':
+                
+                break;
+            default:
+                // TODO: Надо сделать шаблон для неправильного режима
+        }
     }
 /******************************************************************************
     defaultValue($argName, $defaultVal = 0)
@@ -183,6 +200,8 @@ class phpTestDirector
         }
         
         foreach ($fldArray as $key => $value) {
+            $key = (substr($key, 0, 1) == '{' ? $key : '{'.$key);
+            $key = (substr($key, -1) == '}' ? $key : $key. '}');
             $this->contextFields[$key] = $value;
         }
     }    
@@ -248,9 +267,9 @@ class phpTestDirector
     {        
         $template = '';
         if ($name == '') {                       // Имя не передано
-            $name = getBaseDir('templates') . $this->workingMode . '.htm';
+            $name = $this->getBaseDir('templates') . $this->workingMode . '.htm';
         } elseif (substr($name, -4) != '.htm') { // Передано краткое имя шаблона
-            $name = getBaseDir('templates') . $name . '.htm';
+            $name = $this->getBaseDir('templates') . $name . '.htm';
         } else {                                 // Передано полное имя, действие не требуется 
             
         }
@@ -261,6 +280,25 @@ class phpTestDirector
         
         return $template;
     }
+    
+/******************************************************************************
+    extractFieldNames($template)
+    Загружает из текста шаблона названия полей
+    
+    Параметры:
+        $template   -   строка, текст шаблона (HTML со вставками {ПОЛЕЙ})
+                    
+    Возвращаемое значение:
+        Массив с названиями полей, включая скобки (одномерный)
+*/
+    private function extractFieldNames($template)
+    {   
+        $result = [];
+        if (preg_match_all("|{[A-Za-zА-Яа-я0-9\-\.\+\:\=\s]+}|U", $template, $result, PREG_PATTERN_ORDER) > 0) {
+            $result = $result[0];
+        }
+        return $result;
+    }    
     
 /******************************************************************************
     render()
@@ -276,6 +314,12 @@ class phpTestDirector
 */    
     public function render()
     {
-
+        $this->currentTemplate = $this->loadTemplate();                     // Получим шаблон, соответствующий текущему режиму
+        $result = strtr($this->currentTemplate, $this->contextFields);      // Проставим в него заранее вычисленные поля
+        
+        $this->mergeFields = $this->extractFieldNames($this->currentTemplate);// Также получим полный перечень ожидаемых полей
+        $result = strtr($result, array_fill_keys($this->mergeFields, ''));  // И удалим их из шаблона (хотя так стоит делать только в продакшн)
+                            
+        return $result;
     }
 }
