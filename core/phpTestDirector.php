@@ -99,12 +99,17 @@ class phpTestDirector
                 $this->addContextFields([
                     'ФОНОВОЕ ИЗОБРАЖЕНИЕ' => 'background-mosaic-01.jpg',
                     'КОМПАНИЯ' => $this->curTest->getCompanyName(),
-                    'КОММЕНТАРИИ К ТЕСТУ' => $this->curTest->getComments(),
+                    'КОММЕНТАРИИ К ТЕСТУ' => $this->curTest->getComments('input-data'),
                     'ФОРМА ВВОДА' => $this->makeForm('input-data')
                 ]);
                 break;
-            case 'view-test-result':
-                
+            case 'view-test-results':
+                $this->addContextFields([
+                    'ФОНОВОЕ ИЗОБРАЖЕНИЕ' => 'background-mosaic-02.jpg',
+                    'КОМПАНИЯ' => $this->curTest->getCompanyName(),
+                    'РЕЗУЛЬТАТ ВЫЧИСЛЕНИЙ' => $this->makeForm('test-result'),
+                    'КОММЕНТАРИИ К РЕЗУЛЬТАТУ' => $this->curTest->getComments('test-result')
+                ]);
                 break;
             default:
                 // TODO: Надо сделать шаблон для неправильного режима
@@ -154,31 +159,50 @@ class phpTestDirector
                 $template .= "</table>\n</form>";
                 break;
             case 'input-data':
-                $this->testForm = $this->curTest->configTestForm();
-                $template  = "<h2>Задание называется \"".$this->testForm['name']."\"</h2> <form method='post'>\n";
-                $template .= "<input type='hidden' name='".phpTestDirector::MARKER_WORKING_MODE."' value='view-test-results'>\n";
-                $template .= "<input type='hidden' name='".phpTestDirector::MARKER_CLASSNAME."' value='".get_class($this->curTest)."'>\n";
-                foreach ($this->testForm['fields'] as $field => $properties) {
-                    $inputPrefix = "{$properties['caption']} <input type='{$properties['type']}' name='$field' autocomplete='off' value='";
-                    if (isset($properties['value'])) {
-                        if (is_array($properties['value'])) {
-                            foreach ($properties['value'] as $num => $value) {
+                if ($this->is_testCase($this->curTest)) {
+                    $this->testForm = $this->curTest->configTestForm();
+                    $template  = "<h2>Задание называется \"".$this->testForm['name']."\"</h2> <form method='post'>\n";
+                    $template .= "<input type='hidden' name='".phpTestDirector::MARKER_CLASSNAME."' value='".get_class($this->curTest)."'>\n";
+                    foreach ($this->testForm['fields'] as $field => $properties) {
+                        $inputPrefix = "{$properties['caption']} <input type='{$properties['type']}' name='$field' autocomplete='off' value='";
+                        if (isset($properties['value'])) {
+                            if (is_array($properties['value'])) {
+                                foreach ($properties['value'] as $num => $value) {
+                                    $template .= "$inputPrefix$value' />\n";
+                                }
+                            } else {
                                 $template .= "$inputPrefix$value' />\n";
                             }
                         } else {
-                            $template .= "$inputPrefix$value' />\n";
+                            $template .= "$inputPrefix{$this->defaultValue($field, $properties['useDefault'])}' />\n";
                         }
-                    } else {
-                        $template .= "$inputPrefix{$this->defaultValue($field, $properties['useDefault'])}' />\n";
+                        if (isset($properties['newline'])) {
+                            $template .= str_repeat('<br />', $properties['newline']);
+                        }
                     }
-                    if (isset($properties['newline'])) {
-                        $template .= str_repeat('<br />', $properties['newline']);
-                    }
+                    $template .= "<hr>";
+                    $template .= "<button type='submit' name='".phpTestDirector::MARKER_WORKING_MODE."' value='view-test-results'>Вычислить</button> ИЛИ \n";
+                    $template .= "<button type='submit' name='".phpTestDirector::MARKER_WORKING_MODE."' value='select-testcase' >Вернуться к списку тестов</button><br />\n";                    
+                    $template .= "</form>";
+                } else {
+                    $template  = '<h2>Увы, у нас возникла маленькая проблема</h2>\n';
+                    $template .= 'Текущий тест, к сожалению, не инициализирован. Надо отлаживать, как такое получилось.';
+                    $template .= 'Рекомендую начать с формы cases-list, которая, скорее всего, не передала имя класса теста.';
                 }
-                $template .= "</form>";
                 break;
             case 'test-result':
-                
+                if ($this->is_testCase($this->curTest)) {
+                    $template  = '<form method="post">';
+                    $template .= "<input type='hidden' name='".phpTestDirector::MARKER_CLASSNAME."' value='".get_class($this->curTest)."'>";                    
+                    $template .= "<button type='submit' name='".phpTestDirector::MARKER_WORKING_MODE."' value='view-test'>Запустить тест заново</button> или ";
+                    $template .= "<button type='submit' name='".phpTestDirector::MARKER_WORKING_MODE."' value='select-testcase' >Вернуться к списку тестов</button>";
+                    $template .= '</form>';
+                    $template .= '<hr> <br><pre style="width: 100%;height:200px;overflow:scroll;">' . $this->curTest->computeResults($_REQUEST) . '</pre>';
+                } else {
+                    $template  = '<h2>Увы, у нас возникла маленькая проблема</h2>\n';
+                    $template .= 'Текущий тест, к сожалению, не инициализирован. Надо отлаживать, как такое получилось.<br />\n';
+                    $template .= 'Рекомендую начать с формы input-data, которая, скорее всего, не передала имя класса теста.';
+                }
                 break;
             default:
             

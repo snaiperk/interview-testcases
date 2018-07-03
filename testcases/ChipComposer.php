@@ -49,12 +49,13 @@ class ChipComposer implements \snaiperk\interview\core\phpTestCase
     private $spaceString     =     '';
     private $arr             =    [];
     private $companyName     = 'iConText';
-    private $testName       = 'Сочетания фишек';
-    private $comments        = 'Изначально предлагались значения 36 и 18.
-    Несмотря на теоретическую возможность текущего алгоритма вычислить такое количество сочетаний, 
-    настоятельно не рекомендую запускать скрипт на больших значениях.';
+    private $testName        = 'Сочетания фишек';
+    private $comments        = [
+        'input-data' => 'Изначально предлагались значения 36 и 18. Несмотря на теоретическую возможность текущего алгоритма вычислить такое количество сочетаний, настоятельно не рекомендую запускать скрипт на больших значениях.',
+        'test-result' => 'Без комментариев <img src="/images/smile-zip.png" width=32 height=32 />'
+    ];
     
-    private $fileName        = 'output/ChipComposer.txt';
+    private $fileName        = 'testcases/output/ChipComposer.txt';
     
     private function C($n, $k)
     {
@@ -119,7 +120,7 @@ class ChipComposer implements \snaiperk\interview\core\phpTestCase
         }
         $this->fileBuffer .= $result . "\n";
         $this->fileBufferLen++;
-        if ($this->fileBufferLen >= COMBINATION_DROP_INTERVAL) {
+        if ($this->fileBufferLen >= $this::COMBINATION_DROP_INTERVAL) {
             $this->saveResult();
             $this->fileBufferLen = 0;
         }
@@ -165,11 +166,11 @@ class ChipComposer implements \snaiperk\interview\core\phpTestCase
             } elseif($chips == 1) { // Осталась последняя, и она на каждом текущем шаге цикла лежит на своём месте - то есть её можно уже выводить
                 $this->fileBuffer    .=     $this->makeStorageFormat($result, $freeSpace-$i);
                 $this->fileBufferLen++;
-                if ($this->fileBufferLen >= COMBINATION_DROP_INTERVAL) {
+                if ($this->fileBufferLen >= $this::COMBINATION_DROP_INTERVAL) {
                     $this->saveResult();
                 }
                 if (is_string($prefix)) {
-                    if ($this->outBufferLen < COMBINATION_RENDER_LIMIT) {
+                    if ($this->outBufferLen < $this::COMBINATION_RENDER_LIMIT) {
                         $this->outBuffer .= $this->prepareNum(++$this->outBufferLen).
                                         '. [ ' . $result . str_repeat($this->spaceSymbol,$freeSpace-$i) . " ]<br>\n";
                     }
@@ -180,7 +181,7 @@ class ChipComposer implements \snaiperk\interview\core\phpTestCase
     
     private function checkInput($n)
     {
-        return (is_int($n) && ($n <= FIELDS_LIMIT) && ($n > 0) && ($n <= (PHP_INT_SIZE << 3)));
+        return (is_int($n) && ($n <= $this::FIELDS_LIMIT) && ($n > 0) && ($n <= (PHP_INT_SIZE << 3)));
         // Вынужденное добавление в связи с переходом на бинарное хранение
     }
     
@@ -198,10 +199,11 @@ class ChipComposer implements \snaiperk\interview\core\phpTestCase
     private function saveResult()
     {
         if (is_writable ($this->fileName) || !file_exists($this->fileName)) {
-            $h = fopen($this->fileName, 'a+');
+            $h = (file_exists($this->fileName))? fopen($this->fileName, "a+") : fopen($this->fileName, "w+");
             fwrite($h, $this->fileBuffer);
             $this->fileBuffer = '';
             $this->fileBufferLen = 0;
+            fclose($h);
             return true;
         } else {
             return false;
@@ -215,33 +217,34 @@ class ChipComposer implements \snaiperk\interview\core\phpTestCase
         $errlog = '';
         $n = intval($args['fieldsCount']); // Можно, конечно, проверить на существование в запросе, защититься от битого запроса... Но зачем тут?
         $k = intval($args['chipCount']);
-        $option = $args[$this->resultMarker];
-        $isBinary = strpos($option, 'BIN')!==false;
-        if (!$this->checkInput($n)) $errlog .= 'Ошибка ввода количества ячеек, ожидается число от 1 до '.FIELDS_LIMIT.", а передано \"$n\"<br />\n";
-        if (!$this->checkInput($k)) $errlog .= 'Ошибка ввода количества фишек, ожидается число от 1 до '.FIELDS_LIMIT.", а передано \"$k\"<br />\n";
+        $isBinary = (isset($args['is_binary'])?($args['is_binary'] == 'binary'):false);
+        if (!$this->checkInput($n)) $errlog .= 'Ошибка ввода количества ячеек, ожидается число от 1 до '.$this::FIELDS_LIMIT.", а передано \"$n\"<br />\n";
+        if (!$this->checkInput($k)) $errlog .= 'Ошибка ввода количества фишек, ожидается число от 1 до '.$this::FIELDS_LIMIT.", а передано \"$k\"<br />\n";
         if ($n < $k) $errlog .= "Ошибка ввода количества фишек - их больше, чем ячеек! Все не влезут, придётся складывать горкой.<br />\n";
         if ($errlog == '') {
             $combinations = $this->C($n, $k);
-            $variants = explode(',','ов,,а,а,а,ов,ов,ов,ов,ов');                                            /*         :)        */
+            $variants = explode(',','ов,,а,а,а,ов,ов,ов,ов,ов');                                          /*         :)        */
             $result = 'Имеем '.number_format ( $combinations , 0, '.', ' ' ).' возможны'.($combinations % 10 != 1?'х':'й').' вариант'.$variants[$combinations%10].' расстановки!';
-            $this->outBuffer    =    ($combinations>200?'  Если транспонировать и анимировать эти строки, будет похоже на игру для винтажных мобильников, типа змейки или тетриса:':'  Сами комбинации:')."\n";
-            if ($combinations > COMBINATION_RENDER_LIMIT) {
-                $this->outBuffer .= "(на экран влезло не всё)\n";
+            $this->comments['test-result']    =    ($combinations>200?'Если транспонировать и анимировать эти строки, будет похоже на игру для винтажных мобильников, типа змейки или тетриса!':'Комбинаций вышло не так уж и много')."\n";
+            if ($combinations > $this::COMBINATION_RENDER_LIMIT) {
+                $this->comments['test-result'] .= "(на экран влезло не всё)\n";
             }
-            $this->fileBuffer    =    $combinations."\n";
-            $this->outBufferLen    =    0;
-            $this->fileBufferLen=    0;
+            $this->fileBuffer    = $combinations."\n";
+            $this->outBuffer     = '';
+            $this->outBufferLen  = 0;
+            $this->fileBufferLen = 0;
             $this->clearFile();
             $this->spaceString = str_repeat($this->spaceSymbol, $n); // Получаем строку из кучи пробелов (это уже не надо, так как я грохнул текстовый функционал и перешёл на бинарный)
             $this->combine($k, $n, ($isBinary?0:'')); // Вычисляем, даже если вариантов меньше - в файле будет вариант согласно заданию, а на экране будет красота
+            
             //$this->combine2($n, $k); // Метод потенциально крутой, но работает через жёпъ
             // Хотя это совершенно не обязательно, можно спрятать вызов вычислителя в условие.
             $fileUrl = "<a href='$this->fileName' download>файл</a>";
-            if ($combinations > COMBINATION_RENDER_LIMIT) {
-                $this->outBuffer .= "Превышен лимит отображения комбинаций. Показаны первые ".COMBINATION_RENDER_LIMIT." штук.<br>\nВ $fileUrl всё записалось нормально, не переживайте.";
-            }
-            if ($combinations < COMBINATION_RENDER_MIN) {
-                $this->fileBuffer    =    'Менее '.COMBINATION_RENDER_MIN.' вариантов';
+            if ($combinations > $this::COMBINATION_RENDER_LIMIT) {
+                $this->comments['test-result'] .= "Превышен лимит отображения комбинаций. Показаны первые ".$this::COMBINATION_RENDER_LIMIT." штук.<br>\nВ $fileUrl всё записалось нормально, не переживайте.";
+            } elseif ($combinations < $this::COMBINATION_RENDER_MIN) {
+                $this->fileBuffer    =    'Менее '.$this::COMBINATION_RENDER_MIN.' вариантов';
+                $this->comments['test-result'] .= "Получилось менее ".$this::COMBINATION_RENDER_MIN." вариантов ($combinations), поэтому, по условиям задачи, в файле будет строка-заглушка.";
             }
             $this->saveResult(); // В суматохе чуть не забыли о самом главном - отчитаться о результате
             // Маленькая ремарочка, про вывод чисел в задании ничего не было сказано, но если они нужны - можно и добавить
@@ -260,7 +263,7 @@ class ChipComposer implements \snaiperk\interview\core\phpTestCase
                 'fields'=>[
                     'fieldsCount'=>['type'=>'number', 'caption'=>'Введите количество полей', 'useDefault'=>10, 'newline'=>1], /* 36 */
                     'chipCount'=>['type'=>'number', 'caption'=>'Введите количество фишек', 'useDefault'=>5, 'newline'=>1],    /* 18 */
-                    $this->getResultMarker()=>['type'=>'submit', 'caption'=>'', 'value'=>[/*'Вычислить (BIN FORMAT)!',*/ 'Вычислить!']]
+                    'is_binary'=>['type'=>'checkbox', 'caption'=>'Бинарный режим', 'value'=>[/*'Вычислить (BIN FORMAT)!',*/ 'binary']]
                 ]];
         return $form;
     }

@@ -9,7 +9,6 @@ interface phpTestCase
     public function getTestName();
     public function getCompanyName();
     public function configTestForm();
-    public function getResultMarker();
-    public function getComments();
+    public function getComments($type);
     public function computeResults($argsObject);
 }

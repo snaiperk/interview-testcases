@@ -9,9 +9,7 @@ namespace snaiperk\interview\core;
  *  те выгоды, которые, по идее, должно давать наследование, а именно - избегание дублирования кода.
  */
 trait phpTestCaseTrait
-{
-    private $resultMarker    = 'needToCompute';
-    
+{    
     public function getTestName()
     {
         return $this->testName;
@@ -20,24 +18,18 @@ trait phpTestCaseTrait
     public function configTestForm(){
         $form = ['name'=>"Название теста", 
                 'fields'=>[
-                    'inputString'=>['type'=>'edit', 'caption'=>'Введите строку', 'useDefault'=>'Входная строка', 'newline'=>1],
-                    $this->resultMarker=>['type'=>'submit', 'caption'=>'', 'value'=>[/*'Вычислить (BIN FORMAT)!',*/ 'Вычислить!']]
+                    'inputString'=>['type'=>'edit', 'caption'=>'Введите строку', 'useDefault'=>'Входная строка', 'newline'=>1]
                 ]];            
         return $form;
     } 
 
-    public function getResultMarker()
-    {
-        return $this->resultMarker;
-    }
-    
     public function getCompanyName()
     {
         return $this->companyName;
     }
     
-    public function getComments()
+    public function getComments($type='')
     {
-        return $this->comments;
+        return (isset($this->comments[$type]) ? $this->comments[$type] : '');
     }
 }

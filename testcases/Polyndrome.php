@@ -24,7 +24,10 @@ class Polyndrome implements \snaiperk\interview\core\phpTestCase
 	private $inputStr       = '';   // Саму строку засунем туда же, чтобы не передавать каждый раз
 	private $companyName    = 'TopHotel';
     private $testName       = 'Палиндром';
-	private $comments       = '1. Для запуска этого теста в php.ini должно быть включено расширение mbstring (<b><span style="color:blue">extension</span>=<span style="color:green">mbstring</span>;</b>)<br>2. Построки вида "А" и "АА" палиндромами не считаются, ладно?';
+	private $comments       = [
+        'input-data'  => '1. Для запуска этого теста в php.ini должно быть включено расширение mbstring (<b><span style="color:blue">extension</span>=<span style="color:green">mbstring</span>;</b>)<br>2. Построки вида "А" и "АА" палиндромами не считаются, ладно?',
+        'test-result' => 'Без комментариев <img src="/images/smile-zip.png" width=32 height=32 />'
+    ];
     
 	private function getRefinedString($str)
 	{
@@ -78,7 +81,8 @@ class Polyndrome implements \snaiperk\interview\core\phpTestCase
 					$this->pos = $startPosition + $len;
 				}
 			}
-			$result = (( $this->len <= 1 ) ? mb_substr($this->inputStr, 1, 1) : mb_substr( $this->inputStr, $this->pos - $this->len+2, $this->len * 2 - ($this->abba?0:1)));
+            $this->comments['test-result'] = (($this->len > 1)?('Найден палиндром типа АБ'.($this->abba?'Б':'').'А, длиной '.$this->len.' символов.'):'В тексте палиндромов не найдено! Согласно заданию, возвращаем первую букву.');
+			$result = (($this->len <= 1) ? mb_substr($this->inputStr, 1, 1) : mb_substr( $this->inputStr, $this->pos - $this->len+2, $this->len * 2 - ($this->abba?0:1)));
 		}
 		
 
@@ -90,8 +94,7 @@ class Polyndrome implements \snaiperk\interview\core\phpTestCase
 		// Я решил для начала не разделять полностью отображение и логику, хотя это немножко напрашивается
 		$form = ['name'=>"Про Аргентину, негра и палиндромы", 
 				'fields'=>[
-					'inputString'=>['type'=>'edit', 'caption'=>'Введите строку', 'useDefault'=>'Аргентина манит негра', 'newline'=>1],
-					$this->getResultMarker()=>['type'=>'submit', 'caption'=>'', 'value'=>[/*'Вычислить (BIN FORMAT)!',*/ 'Найти!']]
+					'inputString'=>['type'=>'edit', 'caption'=>'Введите строку', 'useDefault'=>'Аргентина манит негра', 'newline'=>1]
 				]];            
 		return $form;
 	}
