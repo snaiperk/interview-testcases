@@ -14,9 +14,9 @@ namespace snaiperk\interview;
  * Решаем вопрос автозагрузки
  * Этот include-файл не мой - он скачан с сайта PSR.
  */
-include 'core/psr/Psr4AutoloaderClass.php';             // Несмотря на то, что расположение этого файла немного нарушает
-                                                        // общую систему именования, это не страшно, потому что он такой один.
-
+include 'core/psr/Psr4AutoloaderClass.php';             /* Несмотря на то, что расположение этого файла немного нарушает
+                                                         * общую систему именования, это не страшно, потому что он такой один.
+                                                         * ...и потому что без него всё не будет работать как надо! */
 $loader = new \Psr4\Autoloader\Psr4AutoloaderClass;     // Создадим экземпляр загрузчика
 $loader->register();                                    // Зарегистрируем метод
 $loader->addNamespace('snaiperk\interview', $_SERVER['DOCUMENT_ROOT']);          // Мудрить не будем, исходники лежат недалеко
