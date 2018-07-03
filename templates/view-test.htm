@@ -3,17 +3,22 @@
     <head>
         <meta charset='utf-8' />
         <title>Задание от компании {КОМПАНИЯ}</title>
-         <link rel="stylesheet" href='{ТАБЛИЦА СТИЛЕЙ}' />
-         <script src='javascripts/jquery-3.3.1.min.js'></script>
-         <script src='{СКРИПТ JS}'></script>
+        <link rel="stylesheet" href='{ТАБЛИЦА СТИЛЕЙ}' />
+        <script src='javascripts/jquery-3.3.1.min.js'></script>
+        <script src='{СКРИПТ JS}'></script>
+        <script type='text/javascript'>
+            // Задаём имя фона
+            backgroundName = "{ФОНОВОЕ ИЗОБРАЖЕНИЕ}";
+        </script>
     <head>
-    <body class='testcase-setup-document'>
-        <h1>Тестовое задание от компании {КОМПАНИЯ}</h1>
-        
-        <h2>Входные данные:</h2>
-        <p class='testcase-input-form'>{ФОРМА ВВОДА}</p>
-        
-        <h2>Комментарии к тесту:</h2>
-        <p class='testcase-commented'>{КОММЕНТАРИИ К ТЕСТУ}</p>
+    <body class='testcase-select-document'>
+        <div class='testcase-glass-matt'>
+            <h1>Тестовое задание от компании <i>{КОМПАНИЯ}</i></h1>
+            
+            <p class='testcase-input-form'>{ФОРМА ВВОДА}</p>
+            
+            <h2>Комментарии к тесту:</h2>
+            <p class='testcase-commented'>{КОММЕНТАРИИ К ТЕСТУ}</p>
+        </div>
     </body>
 </html>

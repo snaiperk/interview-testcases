@@ -85,14 +85,25 @@ class phpTestDirector
         switch ($this->workingMode) {
             case 'select-testcase':
                 $this->scanTestCaseDir(); // Загрузим список классов
-                $selectForm = $this->makeForm('cases-list');
                 $this->addContextFields([
-                    'ФОРМА ВЫБОРА ЗАДАНИЙ' => $selectForm,
+                    'ФОНОВОЕ ИЗОБРАЖЕНИЕ' => 'background-bricks-01.jpg',
+                    'ФОРМА ВЫБОРА ЗАДАНИЙ' => $this->makeForm('cases-list'),
                     'КОЛИЧЕСТВО ЗАДАНИЙ' => count($this->phpTestCases) // В шаблоне не предусмотрено 0 и др. значения, но допилить недолго
                 ]);
                 break;
             case 'view-test':
-                
+                try {
+                    $tmpName = $this->defaultValue(phpTestDirector::MARKER_CLASSNAME, 'array(0)');
+                    $this->curTest = new $tmpName;
+                    $this->addContextFields([
+                        'ФОНОВОЕ ИЗОБРАЖЕНИЕ' => 'background-mosaic-01.jpg',
+                        'КОМПАНИЯ' => $this->curTest->getCompanyName(),
+                        'КОММЕНТАРИИ К ТЕСТУ' => $this->curTest->getComments(),
+                        'ФОРМА ВВОДА' => $this->makeForm('input-data')
+                    ]);
+                } catch (\Exception $e) {
+                    
+                }
                 break;
             case 'view-test-result':
                 
@@ -133,7 +144,7 @@ class phpTestDirector
         $template = '';
         switch ($formType) {
             case 'cases-list':
-                $template      = "<form method='post' action='#'>\n";
+                $template      = "<form method='post'>\n";
                 $template     .= "<input type='hidden' name='".phpTestDirector::MARKER_WORKING_MODE."' value='view-test'><table>\n";
                 foreach ($this->phpTestCases as $testCase) {
                     $template .= "\t<tr>\n";
@@ -145,7 +156,10 @@ class phpTestDirector
                 $template .= "</table>\n</form>";
                 break;
             case 'input-data':
-                $template = "<h2>Называется \"".$this->testForm['name']."\"</h2> <br> <form method='post'>\n";
+                $this->testForm = $this->curTest->configTestForm();
+                $template  = "<h2>Задание называется \"".$this->testForm['name']."\"</h2> <form method='post'>\n";
+                $template .= "<input type='hidden' name='".phpTestDirector::MARKER_WORKING_MODE."' value='view-test-results'>\n";
+                $template .= "<input type='hidden' name='".phpTestDirector::MARKER_CLASSNAME."' value='".get_class($this->curTest)."'>\n";
                 foreach ($this->testForm['fields'] as $field => $properties) {
                     $inputPrefix = "{$properties['caption']} <input type='{$properties['type']}' name='$field' autocomplete='off' value='";
                     if (isset($properties['value'])) {

@@ -6,17 +6,22 @@
         <link rel="stylesheet" href='{ТАБЛИЦА СТИЛЕЙ}' />
         <script src='javascripts/jquery-3.3.1.min.js'></script>
         <script src='{СКРИПТ JS}'></script>
+        <script type='text/javascript'>
+            // Задаём имя фона
+            backgroundName = "{ФОНОВОЕ ИЗОБРАЖЕНИЕ}";
+        </script>
     <head>
-    <body class='testcase-result-document'>
-        <h1>Тестовое задание от компании {КОМПАНИЯ}</h1>
-        
-        <h2>Входные данные:</h2>
-        <p class='testcase-input-data'>{ВХОДНЫЕ ДАННЫЕ}</p>
-        
-        <h2>Комментарии к результату:</h2>
-        <p class='testcase-commented'>{КОММЕНТАРИИ К РЕЗУЛЬТАТУ}</p>
-        
-        <h2>Результат вычислений:</h2>
-        <p class='testcase-result'>{РЕЗУЛЬТАТ ВЫЧИСЛЕНИЙ}</p>
+    <body class='testcase-select-document'>
+        <div class='testcase-glass-matt'>    
+            <h1>Тестовое задание от компании {КОМПАНИЯ}</h1>
+            
+            <p class='testcase-input-data'>{ВХОДНЫЕ ДАННЫЕ}</p>
+            
+            <h2>Комментарии к результату:</h2>
+            <p class='testcase-commented'>{КОММЕНТАРИИ К РЕЗУЛЬТАТУ}</p>
+            
+            <h2>Результат вычислений:</h2>
+            <p class='testcase-result'>{РЕЗУЛЬТАТ ВЫЧИСЛЕНИЙ}</p>
+        </div>    
     </body>
 </html>

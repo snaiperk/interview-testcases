@@ -8,9 +8,10 @@
 *           io@azbukatuva.ru
 */
 
-function bindClickEvents()
+function main()
 {
     $(document).ready(function(){
+        // 1. Привязываем кнопки "свернуть-развернуть"
         $('*[id]').each(function(){
             if (this.id.slice(-7) == '_button') {
                 var c_id = this.id.substring(0, this.id.length-7)+'_content';
@@ -18,7 +19,7 @@ function bindClickEvents()
                 if (content.length >= 0) {
                     $(this).on('click', function(){
                         content.toggle('fast');
-                        this.toggleClass('clickable');
+                        $(this).toggleClass('clickable');
                         //alert(c_id);
                     });
                     $(this).toggleClass('clickable');
@@ -26,7 +27,18 @@ function bindClickEvents()
                 }
             }
         });
+        // 2. Устанавливаем фон документа и "стеклянного" слоя.
+        setBackground();
     });
 }
 
-bindClickEvents();
+function setBackground()
+{
+    var tmpStyleCSS = "{ background-image: url('/images/"+backgroundName+"');}";
+    $("<style type='text/css'>\n\t.bgPicture "+tmpStyleCSS+"\n\t.glass:before "+tmpStyleCSS+" </style>").appendTo("head");
+    $(".testcase-select-document").addClass('bgPicture');
+    $(".testcase-glass-matt").addClass('glass');
+    //alert('Устанавливаю фон: '+backgroundName);    
+}
+
+main();

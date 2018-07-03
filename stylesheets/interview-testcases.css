@@ -9,7 +9,6 @@
 *   Выбор тестового задания - по сути, главная страница
 */
 .testcase-select-document { /* Тело документа */
-    background-image: url('/images/background-bricks-01.jpg');
     background-size: 500px;
     margin: 0;
     padding: 0;
@@ -36,7 +35,6 @@
 }
 
 .testcase-glass-matt:before { /* Рассеивающая матовая подложка */
-    background-image: url('/images/background-bricks-01.jpg');
     background-size: 500px;
     background-position: left 0px top 0px;  
     content:    '';
