@@ -81,7 +81,11 @@ class phpTestDirector
         // 1. Определим текущий режим работы
         $this->workingMode = $this->defaultValue(phpTestDirector::MARKER_WORKING_MODE, $this->workingModeDefault);
         
-        // 2. Определим для себя алгоритм работы в каждом режиме
+        // 2. Определим, передано ли имя класса, и если да - создадим соответствующий объект
+        $tmpName = $this->defaultValue(phpTestDirector::MARKER_CLASSNAME, '\ArrayObject');
+        if ($tmpName != '\ArrayObject') $this->curTest = new $tmpName; // А если нет - то он так и будет null
+        
+        // 3. Определим для себя алгоритм работы в каждом режиме
         switch ($this->workingMode) {
             case 'select-testcase':
                 $this->scanTestCaseDir(); // Загрузим список классов
@@ -92,18 +96,12 @@ class phpTestDirector
                 ]);
                 break;
             case 'view-test':
-                try {
-                    $tmpName = $this->defaultValue(phpTestDirector::MARKER_CLASSNAME, 'array(0)');
-                    $this->curTest = new $tmpName;
-                    $this->addContextFields([
-                        'ФОНОВОЕ ИЗОБРАЖЕНИЕ' => 'background-mosaic-01.jpg',
-                        'КОМПАНИЯ' => $this->curTest->getCompanyName(),
-                        'КОММЕНТАРИИ К ТЕСТУ' => $this->curTest->getComments(),
-                        'ФОРМА ВВОДА' => $this->makeForm('input-data')
-                    ]);
-                } catch (\Exception $e) {
-                    
-                }
+                $this->addContextFields([
+                    'ФОНОВОЕ ИЗОБРАЖЕНИЕ' => 'background-mosaic-01.jpg',
+                    'КОМПАНИЯ' => $this->curTest->getCompanyName(),
+                    'КОММЕНТАРИИ К ТЕСТУ' => $this->curTest->getComments(),
+                    'ФОРМА ВВОДА' => $this->makeForm('input-data')
+                ]);
                 break;
             case 'view-test-result':
                 
