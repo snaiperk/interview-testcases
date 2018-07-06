@@ -81,8 +81,13 @@ class Polyndrome implements \snaiperk\interview\core\phpTestCase
 					$this->pos = $startPosition + $len;
 				}
 			}
-            $this->comments['test-result'] = (($this->len > 1)?('Найден палиндром типа АБ'.($this->abba?'Б':'').'А, длиной '.$this->len.' символов.'):'В тексте палиндромов не найдено! Согласно заданию, возвращаем первую букву.');
-			$result = (($this->len <= 1) ? mb_substr($this->inputStr, 1, 1) : mb_substr( $this->inputStr, $this->pos - $this->len+2, $this->len * 2 - ($this->abba?0:1)));
+            $tmpLen = ($this->len * 2 - ($this->abba?0:1));
+            $tmpLen2 = $tmpLen % 100;
+            $tmpLen3 = $tmpLen2 % 10;
+            $ov = ((($tmpLen2 > 10) && ($tmpLen2 < 20))||($tmpLen3 == 0)||($tmpLen3 > 4)) ? 'ов' : ($tmpLen3 == 1 ? '' : 'а');
+            
+            $this->comments['test-result'] = (($this->len > 1) ? ('Найден палиндром типа АБ'.($this->abba?'Б':'').'А, длиной '.$tmpLen.' символ'.$ov.'.') : 'В тексте палиндромов не найдено! Согласно заданию, возвращаем первую букву.');
+			$result = (($this->len <= 1) ? mb_substr($this->inputStr, 1, 1) : mb_substr( $this->inputStr, $this->pos - $this->len+2, $tmpLen));
 		}
 		
 
