@@ -192,6 +192,7 @@ class phpTestDirector
                 break;
             case 'test-result':
                 if ($this->is_testCase($this->curTest)) {
+                    $this->testForm = $this->curTest->configTestForm();
                     $template  = '<form method="post">';
                     $template .= "<input type='hidden' name='".phpTestDirector::MARKER_CLASSNAME."' value='".get_class($this->curTest)."'>";                    
                     $template .= "<button type='submit' name='".phpTestDirector::MARKER_WORKING_MODE."' value='view-test'>Запустить тест заново</button> или ";
